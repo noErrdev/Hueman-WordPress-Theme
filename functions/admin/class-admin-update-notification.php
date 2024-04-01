@@ -11,10 +11,12 @@ if ( !class_exists( 'HU_admin_update_notification' ) ) :
 
             //UPDATE NOTICE
             if( !defined( 'HU_SHOW_UPDATE_NOTIFICATION' ) ) { define( 'HU_SHOW_UPDATE_NOTIFICATION', HUEMAN_VER !== '3.7.3' ); }
-            add_action( 'admin_notices'         , array( $this, 'hu_may_be_display_update_notice') );
+            add_action( 'admin_notices', array( $this, 'hu_may_be_display_update_notice') );
             //always add the ajax action
             add_action( 'wp_ajax_dismiss_hueman_update_notice'    , array( $this , 'hu_dismiss_update_notice_action' ) );
-            add_action( 'admin_footer'                  , array( $this , 'hu_write_ajax_dismis_script' ) );
+            // custom call to dismiss wp pointer
+            add_action( 'wp_ajax_custom_wp_dismiss_pointer'    , array( $this , 'hu_custom_wp_dismiss_pointer_action' ) );
+            add_action( 'admin_footer', array( $this , 'hu_write_ajax_dismis_script' ) );
             /* beautify admin notice text using some defaults the_content filter callbacks */
             foreach ( array( 'wptexturize', 'convert_smilies', 'wpautop') as $callback ) {
               if ( function_exists( $callback ) )
@@ -131,7 +133,35 @@ if ( !class_exists( 'HU_admin_update_notification' ) ) :
             wp_die();
         }
 
+        /**
+     * Handles custom dismissing a WordPress pointer via AJAX.
+     */
+    function hu_custom_wp_dismiss_pointer_action() {
 
+      if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'custom_wp_dismiss_pointer' ) ) {
+        // Nonce verification failed
+        wp_send_json_error( 'Invalid nonce.' );
+      }
+      $pointer = $_POST['pointer'];
+
+      if ( sanitize_key( $pointer ) != $pointer ) {
+        wp_die( 0 );
+      }
+
+      //  check_ajax_referer( 'dismiss-pointer_' . $pointer );
+
+      $dismissed = array_filter( explode( ',', (string) get_user_meta( get_current_user_id(), 'dismissed_wp_pointers', true ) ) );
+
+      if ( in_array( $pointer, $dismissed, true ) ) {
+        wp_die( 0 );
+      }
+
+      $dismissed[] = $pointer;
+      $dismissed   = implode( ',', $dismissed );
+
+      update_user_meta( get_current_user_id(), 'dismissed_wp_pointers', $dismissed );
+      wp_die( 1 );
+    }
 
         /**
         * hook : admin_footer
