@@ -16,7 +16,7 @@ The Hueman theme loads fast and is 100% mobile-friendly according to Google. One
 https://github.com/presscustomizr/hueman/releases
 
 = 3.7.25 April 6th 2024 =
-* fixed : vaulVulnerability isse.
+* fixed : Vulnerability issue.
 * update: PHP 8 compatibility 
 
 = 3.7.23 August 17th 2023 =
